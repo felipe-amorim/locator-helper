@@ -2,7 +2,9 @@
 
 ###### As you type the locators on the terminal, it will highlight the current elements in red and all previous elements found will be highlighted in orange with a thinner line.
 
-###### Hope it helps
+[![Example of input](https://i.stack.imgur.com/btIIO.png "Example of input")](https://i.stack.imgur.com/btIIO.png "Example of input")
+
+######Hope it helps
 
 
 ------------
