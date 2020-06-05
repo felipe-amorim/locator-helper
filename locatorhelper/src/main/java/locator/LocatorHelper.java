@@ -7,6 +7,7 @@ import org.openqa.selenium.remote.DesiredCapabilities;
 
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 public class LocatorHelper {
@@ -44,25 +45,47 @@ public class LocatorHelper {
 
     private static List<WebElement> getElements(String xpath, boolean... disableLog) {
         List<WebElement> elements = null;
-        try {
-            int localTime = 40000;
-            while (true) {
-                if(xpath.startsWith("/")||xpath.startsWith("(")) {
+        Set<String> windows = driver.getWindowHandles();
+        System.out.println("Amount of pages found: " + windows.size());
+        boolean encontrou = false;
+        for (String pagina : windows) {
+            try {
+                System.out.println("Trying the page: " + pagina);
+                driver.switchTo().window(pagina);
+                Thread.sleep(500);
+                int quantidadeDeFrames = driver.findElements(By.xpath("//frame")).size();
+                if (quantidadeDeFrames > 0) {
+                    System.out.println("Amount of pages found: " + quantidadeDeFrames + "");
+                    for (int i = 0; i < quantidadeDeFrames; i++) {
+                        driver.switchTo().frame(i);
+                        try {
+                            elements = driver.findElements(By.xpath(xpath));
+                            break;
+                        } catch (IllegalArgumentException e1) {
+                            driver.switchTo().alert();
+                        } catch (WebDriverException ex) {
+                            System.out.println("frame: " + i);
+                        }
+                    }
+                } else {
                     elements = driver.findElements(By.xpath(xpath));
-                }else{
-                    elements = driver.findElements(By.id(xpath));
-                }
-                if(elements.size()>0){
                     break;
                 }
-                localTime = localTime - 100;
-                Thread.sleep(100);
-                System.out.println("Remaining time to locate: "+localTime+"ms");
-                if(localTime<=0){
-                    break;
+            }catch (InvalidSelectorException e) {
+                if (disableLog.length == 0) {
+                    System.out.println("The xpath '" + xpath + "' is not valid");
                 }
+            } catch (IllegalArgumentException e1) {
+                driver.switchTo().alert();
+            } catch (WebDriverException ex) {
+                System.out.println("Could not be found on page: '" + pagina + "'");
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
             }
-            int count = elements.size();
+        }
+
+        int count = elements.size();
+        if (disableLog.length == 0) {
             if (count > 1) {
                 System.out.println("The xpath '" + xpath + "' returned " + count + " elements");
             } else if (count == 1) {
@@ -70,12 +93,6 @@ public class LocatorHelper {
             } else {
                 System.out.println("The xpath '" + xpath + "' returned no elements");
             }
-        } catch (InvalidSelectorException e) {
-            System.out.println("The xpath '" + xpath + "' is not valid");
-        }catch (WebDriverException e){
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
         return elements;
     }
