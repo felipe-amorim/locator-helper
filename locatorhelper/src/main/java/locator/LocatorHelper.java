@@ -14,7 +14,7 @@ public class LocatorHelper {
 
     public static void main(String[] args) {
         createIE();
-        driver.get("http://www.google.com.br/");
+        driver.get("http://10.230.230.60:8080/NETSales/");
         JavascriptExecutor js = (JavascriptExecutor) driver;
         Scanner scan = new Scanner(System.in);
         String mainXpath = "";
@@ -45,21 +45,37 @@ public class LocatorHelper {
     private static List<WebElement> getElements(String xpath, boolean... disableLog) {
         List<WebElement> elements = null;
         try {
-            elements = driver.findElements(By.xpath(xpath));
-            int count = elements.size();
-            if (disableLog.length == 0) {
-                if (count > 1) {
-                    System.out.println("The xpath '" + xpath + "' returned " + count + " elements");
-                } else if (count == 1) {
-                    System.out.println("The xpath '" + xpath + "' returned one element");
-                } else {
-                    System.out.println("The xpath '" + xpath + "' returned no elements");
+            int localTime = 40000;
+            while (true) {
+                if(xpath.startsWith("/")||xpath.startsWith("(")) {
+                    elements = driver.findElements(By.xpath(xpath));
+                }else{
+                    elements = driver.findElements(By.id(xpath));
+                }
+                if(elements.size()>0){
+                    break;
+                }
+                localTime = localTime - 100;
+                Thread.sleep(100);
+                System.out.println("Remaining time to locate: "+localTime+"ms");
+                if(localTime<=0){
+                    break;
                 }
             }
-        } catch (InvalidSelectorException e) {
-            if (disableLog.length == 0) {
-                System.out.println("The xpath '" + xpath + "' is not valid");
+            int count = elements.size();
+            if (count > 1) {
+                System.out.println("The xpath '" + xpath + "' returned " + count + " elements");
+            } else if (count == 1) {
+                System.out.println("The xpath '" + xpath + "' returned one element");
+            } else {
+                System.out.println("The xpath '" + xpath + "' returned no elements");
             }
+        } catch (InvalidSelectorException e) {
+            System.out.println("The xpath '" + xpath + "' is not valid");
+        }catch (WebDriverException e){
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         return elements;
     }
